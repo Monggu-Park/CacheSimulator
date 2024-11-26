@@ -138,3 +138,51 @@ class Simulator(object):
         print()
         self.display_cache(cache, table_width)
         print()
+
+    def run_2level_simulation(
+        self,
+        l1_cache_params,
+        l2_cache_params,
+        num_addr_bits,
+        word_addrs,
+    ):
+        l1_blocks_per_set, l1_words_per_block, l1_cache_size, l1_replacement_policy = l1_cache_params
+        l1_num_blocks = l1_cache_size // l1_words_per_block
+        l1_num_sets = l1_num_blocks // l1_blocks_per_set
+        l1_cache = Cache(num_sets=l1_num_sets, num_index_bits=int(math.log2(l1_num_sets)))
+
+        l2_blocks_per_set, l2_words_per_block, l2_cache_size, l2_replacement_policy = l2_cache_params
+        l2_num_blocks = l2_cache_size // l2_words_per_block
+        l2_num_sets = l2_num_blocks // l2_blocks_per_set
+        l2_cache = Cache(num_sets=l2_num_sets, num_index_bits=int(math.log2(l2_num_sets)))
+
+        refs = self.get_addr_refs(
+            word_addrs, num_addr_bits, int(math.log2(l1_words_per_block)), int(math.log2(l1_num_sets)),
+            num_addr_bits - int(math.log2(l1_words_per_block)) - int(math.log2(l1_num_sets))
+        )
+
+        l1_cache.read_refs_2level(
+            l1_cache=l1_cache,
+            l2_cache=l2_cache,
+            l1_num_blocks_per_set=l1_num_blocks,
+            l1_num_words_per_block=l1_words_per_block,
+            l2_num_blocks_per_set=l2_num_blocks,
+            l2_num_words_per_block=l2_words_per_block,
+            replacement_policy=l1_replacement_policy,
+            refs=refs,
+        )
+
+        table_width = max(
+            (
+                shutil.get_terminal_size((DEFAULT_TABLE_WIDTH, None)).columns,
+                DEFAULT_TABLE_WIDTH,
+            )
+        )
+
+        print()
+        self.display_addr_refs(refs, table_width)
+        print()
+        self.display_cache(l1_cache, table_width)
+        print()
+        self.display_cache(l2_cache, table_width)
+        print()

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from cachesimulator.bin_addr import BinaryAddress
-from cachesimulator.reference import ReferenceCacheStatus
+from cachesimulator.reference import ReferenceCacheStatus, Reference2levelCacheStatus
 from cachesimulator.word_addr import WordAddress
 
 
@@ -97,3 +97,47 @@ class Cache(dict):
                     addr_index=ref.index,
                     new_entry=ref.get_cache_entry(num_words_per_block),
                 )
+
+    def read_refs_2level(
+        self,
+        l1_cache,
+        l2_cache,
+        l1_num_blocks_per_set,
+        l1_num_words_per_block,
+        l2_num_blocks_per_set,
+        l2_num_words_per_block,
+        replacement_policy,
+        refs,
+    ):
+        for ref in refs:
+            l1_cache.mark_ref_as_last_seen(ref)
+
+            if l1_cache.is_hit(ref.index, ref.tag):
+                ref.cache_status = Reference2levelCacheStatus.l1_hit
+            else:
+                l2_cache.mark_ref_as_last_seen(ref)
+
+                if l2_cache.is_hit(ref.index, ref.tag):
+                    ref.cache_status = Reference2levelCacheStatus.l1_miss_l2_hit
+
+                    l1_cache.set_block(
+                        replacement_policy=replacement_policy,
+                        num_blocks_per_set=l1_num_blocks_per_set,
+                        addr_index=ref.index,
+                        new_entry=ref.get_cache_entry(l1_num_words_per_block),
+                    )
+                else:
+                    ref.cache_status = Reference2levelCacheStatus.l1_miss_l2_miss
+
+                    l2_cache.set_block(
+                        replacement_policy=replacement_policy,
+                        num_blocks_per_set=l2_num_blocks_per_set,
+                        addr_index=ref.index,
+                        new_entry=ref.get_cache_entry(l2_num_words_per_block),
+                    )
+                    l1_cache.set_block(
+                        replacement_policy=replacement_policy,
+                        num_blocks_per_set=l1_num_blocks_per_set,
+                        addr_index=ref.index,
+                        new_entry=ref.get_cache_entry(l1_num_words_per_block),
+                    )

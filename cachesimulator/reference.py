@@ -49,3 +49,20 @@ class ReferenceCacheStatus(Enum):
             return "miss"
 
     __repr__ = __str__
+
+class Reference2levelCacheStatus(Enum):
+    l1_hit = 0
+    l1_miss_l2_hit = 1
+    l1_miss_l2_miss = 2
+
+    def __str__(self):
+        if self.value == Reference2levelCacheStatus.l1_hit.value:
+            return "L1_HIT"
+        elif self.value == Reference2levelCacheStatus.l1_miss_l2_hit.value:
+            return "L1_Miss, L2_HIT"
+        elif self.value == Reference2levelCacheStatus.l1_miss_l2_miss.value:
+            return "L1_Miss, L2_Miss"
+        else:
+            return "Unknown"
+
+    __repr__ = __str__
