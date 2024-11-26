@@ -58,19 +58,25 @@ class Cache(dict):
         self.access_count[(addr_index, tag)] += 1
 
     # Iterate through the recently-used entries in reverse order for MRU
-    def replace_block(self, blocks, replacement_policy, addr_index, new_entry):
+    def replace_block(self, blocks, replacement_policy, addr_index, new_entry): #LFU 알고리즘 추가
         if replacement_policy == "mru":
             recently_used_addrs = reversed(self.recently_used_addrs)
         elif replacement_policy == "lfu":
-            recently_used_addrs = sorted()
-
+            recently_used_addrs = sorted(
+                self.access_count.items(), key=lambda x: (x[1], self.recently_used_addrs.index(x[0]))
+            )
         else:
             recently_used_addrs = self.recently_used_addrs
+
         # Replace the first matching entry with the entry to add
-        for recent_index, recent_tag in recently_used_addrs:
+        for recent_item in recently_used_addrs:
+            recent_index, recent_tag = recent_item if replacement_policy != "lfu" else recent_item[0]
             for i, block in enumerate(blocks):
                 if recent_index == addr_index and block["tag"] == recent_tag:
                     blocks[i] = new_entry
+                    # Reset access count for the replaced entry
+                    if replacement_policy == "lfu":
+                        del self.access_count[(recent_index, recent_tag)]
                     return
 
     # Adds the given entry to the cache at the given index
