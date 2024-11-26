@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from black.trans import defaultdict
 
 from cachesimulator.bin_addr import BinaryAddress
 from cachesimulator.reference import ReferenceCacheStatus
@@ -13,6 +14,7 @@ class Cache(dict):
         # A list of recently ordered addresses, ordered from least-recently
         # used to most
         self.recently_used_addrs = []
+        self.access_count = defaultdict(int)
 
         if cache is not None:
             self.update(cache)
@@ -51,10 +53,17 @@ class Cache(dict):
 
         return False
 
+    def update_access(self, addr_index, tag):
+        self.recently_used_addrs.append(addr_index, tag)
+        self.access_count[(addr_index, tag)] += 1
+
     # Iterate through the recently-used entries in reverse order for MRU
     def replace_block(self, blocks, replacement_policy, addr_index, new_entry):
         if replacement_policy == "mru":
             recently_used_addrs = reversed(self.recently_used_addrs)
+        elif replacement_policy == "lfu":
+            recently_used_addrs = sorted()
+
         else:
             recently_used_addrs = self.recently_used_addrs
         # Replace the first matching entry with the entry to add
