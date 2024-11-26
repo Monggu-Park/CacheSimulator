@@ -141,34 +141,37 @@ class Simulator(object):
 
     def run_2level_simulation(
         self,
-        l1_cache_params,
-        l2_cache_params,
+        cache_size,
+        num_blocks_per_set,
+        num_words_per_block,
+        replacement_policy,
         num_addr_bits,
         word_addrs,
     ):
-        l1_blocks_per_set, l1_words_per_block, l1_cache_size, l1_replacement_policy = l1_cache_params
-        l1_num_blocks = l1_cache_size // l1_words_per_block
-        l1_num_sets = l1_num_blocks // l1_blocks_per_set
+        l1_num_blocks = cache_size // num_words_per_block
+        l1_num_sets = l1_num_blocks // num_blocks_per_set
         l1_cache = Cache(num_sets=l1_num_sets, num_index_bits=int(math.log2(l1_num_sets)))
 
-        l2_blocks_per_set, l2_words_per_block, l2_cache_size, l2_replacement_policy = l2_cache_params
-        l2_num_blocks = l2_cache_size // l2_words_per_block
-        l2_num_sets = l2_num_blocks // l2_blocks_per_set
+        l2_cache_size = cache_size * 4
+        l2_num_blocks_per_set = num_blocks_per_set * 2
+        l2_num_words_per_block = num_words_per_block * 2
+        l2_num_blocks = l2_cache_size // l2_num_words_per_block
+        l2_num_sets = l2_num_blocks // l2_num_blocks_per_set
         l2_cache = Cache(num_sets=l2_num_sets, num_index_bits=int(math.log2(l2_num_sets)))
 
         refs = self.get_addr_refs(
-            word_addrs, num_addr_bits, int(math.log2(l1_words_per_block)), int(math.log2(l1_num_sets)),
-            num_addr_bits - int(math.log2(l1_words_per_block)) - int(math.log2(l1_num_sets))
+            word_addrs, num_addr_bits, int(math.log2(num_words_per_block)), int(math.log2(l1_num_sets)),
+            num_addr_bits - int(math.log2(num_words_per_block)) - int(math.log2(l1_num_sets))
         )
 
         l1_cache.read_refs_2level(
             l1_cache=l1_cache,
             l2_cache=l2_cache,
-            l1_num_blocks_per_set=l1_num_blocks,
-            l1_num_words_per_block=l1_words_per_block,
-            l2_num_blocks_per_set=l2_num_blocks,
-            l2_num_words_per_block=l2_words_per_block,
-            replacement_policy=l1_replacement_policy,
+            l1_num_blocks_per_set=num_blocks_per_set,
+            l1_num_words_per_block=num_words_per_block,
+            l2_num_blocks_per_set=l2_num_blocks_per_set,
+            l2_num_words_per_block=l2_num_words_per_block,
+            replacement_policy=replacement_policy,
             refs=refs,
         )
 
@@ -179,10 +182,10 @@ class Simulator(object):
             )
         )
 
-        print()
+        print("\nAddress References\n")
         self.display_addr_refs(refs, table_width)
-        print()
+        print("\nL1 Cache State\n")
         self.display_cache(l1_cache, table_width)
-        print()
+        print("\nL2 Cache State\n")
         self.display_cache(l2_cache, table_width)
         print()
