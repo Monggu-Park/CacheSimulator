@@ -141,28 +141,35 @@ class Simulator(object):
 
     def run_2level_simulation(
         self,
-        cache_size,
         num_blocks_per_set,
         num_words_per_block,
+        cache_size,
         replacement_policy,
         num_addr_bits,
         word_addrs,
     ):
         l1_num_blocks = cache_size // num_words_per_block
         l1_num_sets = l1_num_blocks // num_blocks_per_set
-        l1_cache = Cache(num_sets=l1_num_sets, num_index_bits=int(math.log2(l1_num_sets)))
+
+        num_addr_bits = max(num_addr_bits, int(math.log2(max(word_addrs))) + 1)
+
+        num_offset_bits = int(math.log2(num_words_per_block))
+        num_index_bits = int(math.log2(l1_num_sets))
+        num_tag_bits = num_addr_bits - num_index_bits - num_offset_bits
 
         l2_cache_size = cache_size * 4
         l2_num_blocks_per_set = num_blocks_per_set * 2
         l2_num_words_per_block = num_words_per_block * 2
         l2_num_blocks = l2_cache_size // l2_num_words_per_block
         l2_num_sets = l2_num_blocks // l2_num_blocks_per_set
-        l2_cache = Cache(num_sets=l2_num_sets, num_index_bits=int(math.log2(l2_num_sets)))
 
         refs = self.get_addr_refs(
-            word_addrs, num_addr_bits, int(math.log2(num_words_per_block)), int(math.log2(l1_num_sets)),
-            num_addr_bits - int(math.log2(num_words_per_block)) - int(math.log2(l1_num_sets))
+            word_addrs, num_addr_bits, num_offset_bits, num_index_bits, num_tag_bits
         )
+
+        l1_cache = Cache(num_sets=l1_num_sets, num_index_bits=int(math.log2(l1_num_sets)))
+        l2_cache = Cache(num_sets=l2_num_sets, num_index_bits=int(math.log2(l2_num_sets)))
+
 
         l1_cache.read_refs_2level(
             l1_cache=l1_cache,
