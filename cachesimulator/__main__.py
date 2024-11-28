@@ -42,11 +42,11 @@ def parse_cli_args():
 
     parser.add_argument(
         "--replacement-policy",
-        choices=("lru", "mru"),
+        choices=("lru", "lfu", "mru"),
         default="lru",
         # Ignore argument case (e.g. "mru" and "MRU" are equivalent)
         type=str.lower,
-        help="the cache replacement policy (LRU or MRU)",
+        help="the cache replacement policy (LRU or LFU or MRU)",
     )
 
     return parser.parse_args()
